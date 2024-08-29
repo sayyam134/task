@@ -53,6 +53,7 @@ class NotificationService {
         'Reminder Notifications',
         importance: Importance.max,
         priority: Priority.high,
+        playSound: true,
         sound: RawResourceAndroidNotificationSound('notification_sound'),
       ),
     );

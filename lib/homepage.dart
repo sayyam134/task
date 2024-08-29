@@ -72,13 +72,13 @@ class HomePage extends StatelessWidget {
                   Text(
                     reminder.day,
                     style: TextStyle(
-                      fontSize: 20,
+                      fontSize: 24,
                       fontWeight: FontWeight.bold,
                     ),
                   ),
                   SizedBox(height: 4),
                   Text(
-                    '${reminder.time.format(context)} - ${reminder.activity}',
+                    '${reminder.activity} at ${reminder.time.format(context)}',
                     style: TextStyle(
                       fontSize: 16,
                       color: Colors.black,
@@ -97,10 +97,22 @@ class HomePage extends StatelessWidget {
           },
         );
       }),
-      floatingActionButton: FloatingActionButton(
-        onPressed: () => _showAddReminderDialog(context),
-        child: Icon(Icons.add),
-      ),
+      floatingActionButton: Obx((){
+        if(controller.reminders.isNotEmpty){
+          return FloatingActionButton(
+            onPressed: () => _showAddReminderDialog(context),
+            child: Icon(Icons.add),
+          );
+        }
+        else{
+          return SizedBox.shrink();
+        }
+      })
+
+      // controller.reminders.isEmpty? null : FloatingActionButton(
+      //   onPressed: () => _showAddReminderDialog(context),
+      //   child: Icon(Icons.add),
+      // ),//
     );
   }
 
@@ -173,7 +185,7 @@ class __AddReminderDialogState extends State<_AddReminderDialog> {
                 onTap: () async {
                   final time = await showTimePicker(
                     context: context,
-                    initialTime: TimeOfDay.now(),
+                    initialTime: _incrementInitialTime(1),
                   );
                   if (time != null) {
                     setState(() {
@@ -275,6 +287,21 @@ class __AddReminderDialogState extends State<_AddReminderDialog> {
       ),
     );
   }
+
+  TimeOfDay _incrementInitialTime(int min){
+    TimeOfDay now = TimeOfDay.now();
+    DateTime nowDateTime = DateTime(
+      DateTime.now().year,
+      DateTime.now().month,
+      DateTime.now().day,
+      now.hour,
+      now.minute,
+    );
+    DateTime newDateTime = nowDateTime.add(Duration(minutes: min));
+    TimeOfDay newTime = TimeOfDay(hour: newDateTime.hour, minute: newDateTime.minute);
+
+    return newTime;
+  }
 }
 
 void _showDeleteConfirmationDialog(
@@ -307,3 +334,5 @@ void _showDeleteConfirmationDialog(
     },
   );
 }
+
+
