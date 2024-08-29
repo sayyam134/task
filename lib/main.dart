@@ -8,17 +8,9 @@ final FlutterLocalNotificationsPlugin flutterLocalNotificationsPlugin = FlutterL
 
 void main() {
   WidgetsFlutterBinding.ensureInitialized();
-  //_initializeNotifications();
   tz.initializeTimeZones();
   runApp(MyApp());
 }
-
-// void _initializeNotifications() async {
-//   final InitializationSettings initializationSettings = InitializationSettings(
-//     android: AndroidInitializationSettings('@mipmap/ic_launcher'),
-//   );
-//   await flutterLocalNotificationsPlugin.initialize(initializationSettings);
-// }
 
 class MyApp extends StatelessWidget {
   @override
