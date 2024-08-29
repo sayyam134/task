@@ -1,5 +1,4 @@
 import 'dart:math';
-
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:permission_handler/permission_handler.dart';
@@ -17,11 +16,16 @@ final List<String> activities = [
   'Dinner',
   'Go to sleep',
 ];
+
 final FlutterLocalNotificationsPlugin flutterLocalNotificationsPlugin =
     FlutterLocalNotificationsPlugin();
 
 class TaskController extends GetxController {
   var reminders = <TaskReminder>[].obs;
+
+  void deleteReminder(int index) {
+    reminders.removeAt(index);
+  }
 }
 
 class TaskReminder {
@@ -40,6 +44,7 @@ class TaskReminder {
 
 class HomePage extends StatelessWidget {
   final TaskController controller = Get.put(TaskController());
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -61,8 +66,33 @@ class HomePage extends StatelessWidget {
           itemBuilder: (context, index) {
             final reminder = controller.reminders[index];
             return ListTile(
-              title: Text(
-                  '${reminder.day} ${reminder.time.format(context)} - ${reminder.activity}'),
+              title: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    reminder.day,
+                    style: TextStyle(
+                      fontSize: 20,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                  SizedBox(height: 4),
+                  Text(
+                    '${reminder.time.format(context)} - ${reminder.activity}',
+                    style: TextStyle(
+                      fontSize: 16,
+                      color: Colors.black,
+                    ),
+                  ),
+                ],
+              ),
+              trailing: IconButton(
+                icon: Icon(Icons.delete, color: Colors.red),
+                onPressed: () {
+                  _showDeleteConfirmationDialog(
+                      context, index, reminder.taskID);
+                },
+              ),
             );
           },
         );
@@ -96,7 +126,6 @@ class __AddReminderDialogState extends State<_AddReminderDialog> {
 
   @override
   void initState() {
-    // TODO: implement initState
     super.initState();
     Permission.notification.request();
     NotificationService().initNotification();
@@ -183,7 +212,10 @@ class __AddReminderDialogState extends State<_AddReminderDialog> {
           onPressed: () async {
             if (selectedTime != null) {
               final newReminder = TaskReminder(
-                taskID: DateTime.now().year+DateTime.now().month+DateTime.now().day+Random().nextInt(1440),
+                taskID: DateTime.now().year +
+                    DateTime.now().month +
+                    DateTime.now().day +
+                    Random().nextInt(1440),
                 day: dayController.text,
                 time: selectedTime!,
                 activity: activityController.text,
@@ -204,19 +236,15 @@ class __AddReminderDialogState extends State<_AddReminderDialog> {
                         DateTime.now().day,
                         newReminder.time.hour,
                         newReminder.time.minute));
-                print("working");
-              }
-              if (notificationStatus == PermissionStatus.denied) {
+              } else if (notificationStatus == PermissionStatus.denied) {
                 ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(content: Text("Ther permission is denied")));
-                print("Not working");
-              }
-              if (notificationStatus == PermissionStatus.permanentlyDenied) {
+                    const SnackBar(content: Text("Permission denied")));
+              } else if (notificationStatus ==
+                  PermissionStatus.permanentlyDenied) {
                 openAppSettings();
               }
               Get.back();
             } else {
-              // Handle case where no time is selected
               ScaffoldMessenger.of(context).showSnackBar(
                 SnackBar(content: Text('Please select a time')),
               );
@@ -247,4 +275,35 @@ class __AddReminderDialogState extends State<_AddReminderDialog> {
       ),
     );
   }
+}
+
+void _showDeleteConfirmationDialog(
+    BuildContext context, int index, int taskID) {
+  showDialog(
+    context: context,
+    builder: (BuildContext context) {
+      return AlertDialog(
+        title: Text("Delete Reminder"),
+        content: Text("Are you sure you want to delete this reminder?"),
+        actions: [
+          TextButton(
+            onPressed: () {
+              Get.back(); // Close the dialog
+            },
+            child: Text("Cancel"),
+          ),
+          TextButton(
+            onPressed: () {
+              final TaskController controller = Get.find();
+              // controller.reminders.removeAt(index);
+              controller.deleteReminder(index);
+              NotificationService().cancelNotifications(taskID);
+              Get.back(); // Close the dialog
+            },
+            child: Text("Delete"),
+          ),
+        ],
+      );
+    },
+  );
 }
