@@ -41,6 +41,8 @@ dev_dependencies:
     sdk: flutter
   get: ^4.6.5
   flutter_local_notifications: ^14.0.0
+  timezone: ^0.9.4
+  permission_handler: ^10.4.3
 
 
   # The "flutter_lints" package below contains a set of recommended lints to

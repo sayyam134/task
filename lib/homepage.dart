@@ -1,6 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import 'package:permission_handler/permission_handler.dart';
+import 'package:timezone/timezone.dart' as tz;
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
+
+import 'noti.dart';
 
 final List<String> activities = [
   'Wake up',
@@ -13,7 +17,6 @@ final List<String> activities = [
   'Dinner',
   'Go to sleep',
 ];
-
 final FlutterLocalNotificationsPlugin flutterLocalNotificationsPlugin = FlutterLocalNotificationsPlugin();
 
 class TaskController extends GetxController {
@@ -34,7 +37,6 @@ class TaskReminder {
 
 class HomePage extends StatelessWidget {
   final TaskController controller = Get.put(TaskController());
-
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -87,6 +89,14 @@ class __AddReminderDialogState extends State<_AddReminderDialog> {
   final dayController = TextEditingController();
   TimeOfDay? selectedTime;
   final activityController = TextEditingController();
+
+  @override
+  void initState(){
+    // TODO: implement initState
+    super.initState();
+    Permission.notification.request();
+    NotificationService().initNotification();
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -154,7 +164,7 @@ class __AddReminderDialogState extends State<_AddReminderDialog> {
           child: Text('Cancel'),
         ),
         TextButton(
-          onPressed: () {
+          onPressed: () async {
             if (selectedTime != null) {
               final newReminder = TaskReminder(
                 day: dayController.text,
@@ -163,7 +173,19 @@ class __AddReminderDialogState extends State<_AddReminderDialog> {
               );
               final TaskController controller = Get.find();
               controller.reminders.add(newReminder);
-              _scheduleNotification(newReminder);
+              PermissionStatus notificationStatus = await Permission.notification.request();
+              if(notificationStatus == PermissionStatus.granted){
+                NotificationService().showNotification(title: "New Reminder: ${newReminder.activity} is added.!");
+                NotificationService().schdeuleNotification(id: 0 ,body: "Reminder of ${newReminder.activity}", scheduleDateTime: DateTime(DateTime.now().year, DateTime.now().month, DateTime.now().day, newReminder.time.hour, newReminder.time.minute));
+                print("working");
+              }
+              if(notificationStatus== PermissionStatus.denied){
+                ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text("Ther permission is denied")));
+                print("Not working");
+              }
+              if(notificationStatus== PermissionStatus.permanentlyDenied){
+                openAppSettings();
+              }
               Get.back();
             } else {
               // Handle case where no time is selected
@@ -194,28 +216,6 @@ class __AddReminderDialogState extends State<_AddReminderDialog> {
           child,
         ],
       ),
-    );
-  }
-
-  Future<void> _scheduleNotification(TaskReminder reminder) async {
-    final notificationDetails = AndroidNotificationDetails(
-      'reminder_channel_id',
-      'Reminder Notifications',
-      importance: Importance.max,
-      priority: Priority.high,
-      sound: RawResourceAndroidNotificationSound('notification_sound'),
-    );
-
-    final platformChannelSpecifics = NotificationDetails(android: notificationDetails);
-
-    final scheduledTime = DateTime.now().add(Duration(seconds: 10)); // Example: 10 seconds from now
-
-    await flutterLocalNotificationsPlugin.schedule(
-      0,
-      'Reminder',
-      'Time for ${reminder.activity}!',
-      scheduledTime,
-      platformChannelSpecifics,
     );
   }
 }
